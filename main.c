@@ -2,20 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// void cross(int rows, int cols, char *population) {
-//     printf("Cross...");
-//     for (int i = 0; i < rows; i++)
-//     {
-//         for (int j = 0; j < cols; j++)
-//         {
-//             printf("%d ",i);
-//             printf("%d \n",j);
-//         }
-
-//     }
-// }
-
-char index(char *arr, int i, int j, int row_length)
+char get_char(char *arr, int i, int j, int row_length)
 {
     int pos = (row_length * i) + j;
     return arr[pos];
@@ -45,6 +32,32 @@ char *read(char *path)
     return content;
 }
 
+int range_rand(int min, int max)
+{
+    return (rand() %
+            (max - min + 1)) +
+           min;
+}
+
+void cross(char *population, int row_length, char *best)
+{
+    int counter = 0;
+    int best_index = range_rand(0, row_length);
+    char *random_best = best[best_index];
+    for (size_t i = 0; i < strlen(population); i++)
+    {
+        if (counter == row_length)
+        {
+            int best_index = range_rand(0, row_length);
+            *random_best = best[best_index];
+            counter = 0;
+        }
+
+        population[counter] = random_best[counter];
+        counter += 1;
+    }
+}
+
 int main(int argc, char *argv[])
 {
     const int POP = 100;
@@ -57,28 +70,31 @@ int main(int argc, char *argv[])
     int number_of_bytes = strlen(bytes);
 
     char *population = malloc(number_of_bytes * POP);
-    char *best = malloc(BEST);
+    char *best = malloc(number_of_bytes * BEST);
 
     float **score = malloc(sizeof(float *) * POP);
 
-    for (int i = 0; i < POP; i++)
+    for (int i = 0; i < number_of_bytes * POP; i++)
     {
         population[i] = '0';
+    }
 
+    for (int i = 0; i < number_of_bytes * BEST; i++)
+    {
+        best[i] = '0';
+    }
+
+    for (size_t i = 0; i < POP; i++)
+    {
         score[i] = malloc(sizeof(float) * 2);
         score[i][0] = 0.0;
         score[i][1] = 0.0;
     }
 
-    for (int i = 0; i < BEST; i++)
-    {
-        best[i] = 0;
-    }
-
     printf("Begining cycles");
     for (int cycle = 0; cycle < CYCLES; cycle++)
     {
-        // cross(POP, size, *population);
+        cross(population, number_of_bytes, best);
     }
 
     exit(0);
