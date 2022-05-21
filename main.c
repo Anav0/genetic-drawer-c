@@ -34,28 +34,28 @@ char *read(char *path)
 
 int range_rand(int min, int max)
 {
-    return (rand() %
-            (max - min + 1)) +
-           min;
+    return (rand() % (max - min + 1)) + min;
 }
 
 void cross(char *population, int row_length, char *best)
 {
     int counter = 0;
-    int best_index = range_rand(0, row_length);
-    char *random_best = best[best_index];
+    int number_of_best = strlen(best) / row_length;
+    int best_index = range_rand(0, number_of_best - 1) * row_length;
+    char *random_best = &best[best_index];
     for (size_t i = 0; i < strlen(population); i++)
     {
         if (counter == row_length)
         {
-            int best_index = range_rand(0, row_length);
-            *random_best = best[best_index];
+            best_index = range_rand(0, number_of_best - 1) * row_length;
+            random_best = &best[best_index];
             counter = 0;
         }
 
-        population[counter] = random_best[counter];
+        population[i] = random_best[counter];
         counter += 1;
     }
+    char x = population[0];
 }
 
 int main(int argc, char *argv[])
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 
     for (int i = 0; i < number_of_bytes * BEST; i++)
     {
-        best[i] = '0';
+        best[i] = 'A';
     }
 
     for (size_t i = 0; i < POP; i++)
