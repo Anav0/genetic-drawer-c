@@ -26,7 +26,6 @@ char *read(char *path)
     fseek(fp, 0, SEEK_SET);
 
     fread(content, 1, size, fp);
-
     fclose(fp);
 
     return content;
@@ -37,13 +36,13 @@ int range_rand(int min, int max)
     return (rand() % (max - min + 1)) + min;
 }
 
-void cross(size_t pop_size, size_t best_size, char *population[pop_size], char *best[best_size], int row_length)
+void cross(size_t pop_size, size_t best_size, char *population[pop_size], char scores[best_size][2], int row_length)
 {
     for (size_t i = 0; i < pop_size; i++)
     {
         char *speciment = population[i];
         int random_index = range_rand(0, best_size - 1);
-        char *random_best = best[random_index];
+        char *random_best = population[(int)scores[random_index][1]];
 
         speciment = random_best;
     }
@@ -99,11 +98,40 @@ void score(size_t pop_size, size_t bytes_size, char *population[pop_size], char 
     }
 }
 
+int cmp(const void *pa, const void *pb)
+{
+    const float *a = (float *)pa;
+    const float *b = (float *)pb;
+
+    return b[0] - a[0];
+}
+
+void initialize(
+    int POP,
+    int number_of_bytes,
+    char *population[POP],
+    float scores[POP][2],
+    char *original_bytes)
+{
+    for (size_t i = 0; i < POP; i++)
+    {
+        population[i] = malloc(number_of_bytes);
+
+        scores[i][0] = 0;
+        scores[i][1] = i;
+
+        for (size_t j = 0; j < number_of_bytes; j++)
+        {
+            population[i][j] = 0;
+        }
+    }
+}
+
 int main(int argc, char *argv[])
 {
     const int POP = 100;
     const int BEST = 10;
-    const int CYCLES = 10000;
+    const int CYCLES = 40;
     const int width = 400;
     const int height = 400;
 
@@ -112,41 +140,26 @@ int main(int argc, char *argv[])
     char *bytes = read(file_name);
     int number_of_bytes = strlen(bytes);
 
-    size_t pop_length = number_of_bytes * POP;
-    size_t best_length = number_of_bytes * BEST;
-
     float scores[POP][2];
     char *population[POP];
-    char *best[BEST];
 
-    for (size_t i = 0; i < POP; i++)
-    {
-        population[i] = malloc(number_of_bytes);
-
-        scores[i][0] = 0;
-        scores[i][1] = (float)i;
-
-        for (size_t j = 0; j < number_of_bytes; j++)
-        {
-            population[i][j] = 0;
-        }
-    }
-    for (size_t i = 0; i < BEST; i++)
-    {
-        best[i] = malloc(number_of_bytes);
-        for (size_t j = 0; j < number_of_bytes; j++)
-        {
-            best[i][j] = 0;
-        }
-    }
+    initialize(POP, number_of_bytes, population, scores, bytes);
 
     printf("Begining cycles\n");
     for (int cycle = 0; cycle < CYCLES; cycle++)
     {
-        cross(POP, BEST, population, best, number_of_bytes);
+        printf("Cycle %i\n", cycle + 1);
+
+        cross(POP, BEST, population, scores, number_of_bytes);
         mutate(POP, population, width, height);
         score(POP, number_of_bytes, population, bytes, scores);
+        qsort(scores, POP, 2 * sizeof(float), cmp);
     }
+
+    FILE *output = fopen("./best.raw", "wb");
+    char *best_s = population[0];
+    fwrite(best_s, 1, number_of_bytes, output);
+    fclose(output);
 
     exit(0);
 }
